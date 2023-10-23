@@ -8,7 +8,8 @@
 namespace morph {
 
     //! This class creates the vertices for a polygonal object in a 3D scene
-    class PolygonVisual : public VisualModel
+    template<int gl_maj = 4, int gl_min = 1, bool gles = false>
+    class PolygonVisual : public VisualModel<gl_maj, gl_min, gles>
     {
     public:
         PolygonVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
