@@ -27,9 +27,11 @@
 namespace morph {
 
     // Pointers to morph::Visual are used to index font faces
+    template<int gl_maj, int gl_min, bool gles>
     class Visual;
 
     //! Singleton resource class for morph::Visual scenes.
+    template<int gl_maj, int gl_min, bool gles>
     class VisualResources
     {
     private:
@@ -55,7 +57,7 @@ namespace morph {
             if (!glfwInit()) { std::cerr << "GLFW initialization failed!\n"; }
 
             // Set up error callback
-            glfwSetErrorCallback (morph::VisualResources::errorCallback);
+            glfwSetErrorCallback (morph::VisualResources<gl_maj, gl_min, gles>::errorCallback);
 
             // See https://www.glfw.org/docs/latest/monitor_guide.html
             GLFWmonitor* primary = glfwGetPrimaryMonitor();
@@ -83,7 +85,8 @@ namespace morph {
         //! The collection of VisualFaces generated for this instance of the
         //! application. Create one VisualFace for each unique combination of VisualFont
         //! and fontpixels (the texture resolution)
-        std::map<std::tuple<morph::VisualFont, unsigned int, morph::Visual*>, morph::gl::VisualFace*> faces;
+        std::map<std::tuple<morph::VisualFont, unsigned int, morph::Visual<gl_maj, gl_min, gles>*>,
+                 morph::gl::VisualFace*> faces;
 
         //! An error callback function for the GLFW windowing library
         static void errorCallback (int error, const char* description)
@@ -92,13 +95,13 @@ namespace morph {
         }
 
         //! FreeType library object, public for access by client code?
-        std::map<morph::Visual*, FT_Library> freetypes;
+        std::map<morph::Visual<gl_maj, gl_min, gles>*, FT_Library> freetypes;
 
     public:
-        VisualResources(const VisualResources&) = delete;
-        VisualResources& operator=(const VisualResources &) = delete;
-        VisualResources(VisualResources &&) = delete;
-        VisualResources & operator=(VisualResources &&) = delete;
+        VisualResources(const VisualResources<gl_maj, gl_min, gles>&) = delete;
+        VisualResources<gl_maj, gl_min, gles>& operator=(const VisualResources<gl_maj, gl_min, gles> &) = delete;
+        VisualResources(VisualResources<gl_maj, gl_min, gles> &&) = delete;
+        VisualResources<gl_maj, gl_min, gles> & operator=(VisualResources<gl_maj, gl_min, gles> &&) = delete;
 
         //! Initialize a freetype library instance and add to this->freetypes. I wanted
         //! to have only a single freetype library instance, but this didn't work, so I
@@ -106,7 +109,7 @@ namespace morph {
         //! window). Thus, arguably, the FT_Library should be a member of morph::Visual,
         //! but that's a task for the future, as I coded it this way under the false
         //! assumption that I'd only need one FT_Library.
-        void freetype_init (morph::Visual* _vis)
+        void freetype_init (morph::Visual<gl_maj, gl_min, gles>* _vis)
         {
             FT_Library freetype = (FT_Library)0;
             try {
@@ -128,7 +131,7 @@ namespace morph {
         //! This relies on C++11 magic statics (N2660).
         static auto& i()
         {
-            static VisualResources instance;
+            static VisualResources<gl_maj, gl_min, gles> instance;
             return instance;
         }
 
@@ -137,7 +140,8 @@ namespace morph {
 
         //! Return a pointer to a VisualFace for the given \a font at the given texture
         //! resolution, \a fontpixels and the given window (i.e. OpenGL context) \a _win.
-        morph::gl::VisualFace* getVisualFace (morph::VisualFont font, unsigned int fontpixels, morph::Visual* _vis)
+        morph::gl::VisualFace* getVisualFace (morph::VisualFont font, unsigned int fontpixels,
+                                              morph::Visual<gl_maj, gl_min, gles>* _vis)
         {
             morph::gl::VisualFace* rtn = nullptr;
             auto key = std::make_tuple(font, fontpixels, _vis);

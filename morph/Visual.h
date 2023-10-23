@@ -111,6 +111,7 @@ namespace morph {
      * position and field of view of the 'camera' (Visual::zNear, Visual::zFar and
      * Visual::fov).
      */
+    template<int gl_maj = 4, int gl_min = 1, bool gles = false>
     class Visual
     {
     public:
@@ -185,7 +186,7 @@ namespace morph {
         void init_resources()
         {
             // VisualResources provides font management and GLFW management. Ensure it exists in memory.
-            morph::VisualResources::i().create();
+            morph::VisualResources<gl_maj, gl_min, gles>::i().create();
 
             // Set up the window that will present the OpenGL graphics. No-op in
             // Qt-managed Visual, but this has to happen BEFORE the call to
@@ -193,7 +194,7 @@ namespace morph {
             this->init_window();
 
             // Now make sure that Freetype is set up
-            morph::VisualResources::i().freetype_init (this);
+            morph::VisualResources<gl_maj, gl_min, gles>::i().freetype_init (this);
         }
 
         //! Take a screenshot of the window
@@ -244,9 +245,9 @@ namespace morph {
         void bindmodel (std::unique_ptr<T>& model)
         {
             model->set_parent (this);
-            model->get_shaderprogs = &morph::Visual::get_shaderprogs;
-            model->get_gprog = &morph::Visual::get_gprog;
-            model->get_tprog = &morph::Visual::get_tprog;
+            model->get_shaderprogs = &morph::Visual<gl_maj, gl_min, gles>::get_shaderprogs;
+            model->get_gprog = &morph::Visual<gl_maj, gl_min, gles>::get_gprog;
+            model->get_tprog = &morph::Visual<gl_maj, gl_min, gles>::get_tprog;
         }
 
         /*!
@@ -256,7 +257,7 @@ namespace morph {
         template <typename T>
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
-            std::unique_ptr<VisualModel> vmp = std::move(model);
+            std::unique_ptr<VisualModel<gl_maj, gl_min, gles>> vmp = std::move(model);
             this->vm.push_back (std::move(vmp));
             unsigned int rtn = (this->vm.size()-1);
             return rtn;
@@ -268,7 +269,7 @@ namespace morph {
         template <typename T>
         T* addVisualModel (std::unique_ptr<T>& model)
         {
-            std::unique_ptr<VisualModel> vmp = std::move(model);
+            std::unique_ptr<VisualModel<gl_maj, gl_min, gles>> vmp = std::move(model);
             this->vm.push_back (std::move(vmp));
             return static_cast<T*>(this->vm.back().get());
         }
@@ -280,13 +281,13 @@ namespace morph {
          *
          * \return VisualModel pointer
          */
-        VisualModel* getVisualModel (unsigned int modelId) { return (this->vm[modelId].get()); }
+        VisualModel<gl_maj, gl_min, gles>* getVisualModel (unsigned int modelId) { return (this->vm[modelId].get()); }
 
         //! Remove the VisualModel with ID \a modelId from the scene.
         void removeVisualModel (unsigned int modelId) { this->vm.erase (this->vm.begin() + modelId); }
 
         //! Remove the VisualModel whose pointer matches the VisualModel* modelPtr
-        void removeVisualModel (VisualModel* modelPtr)
+        void removeVisualModel (VisualModel<gl_maj, gl_min, gles>* modelPtr)
         {
             unsigned int modelId = 0;
             bool found_model = false;
@@ -308,21 +309,21 @@ namespace morph {
                                       const float _fontsize = 0.01,
                                       const int _fontres = 24)
         {
-            morph::VisualTextModel* tm = nullptr;
+            morph::VisualTextModel<gl_maj, gl_min, gles>* tm = nullptr;
             return this->addLabel (_text, _toffset, tm, _tcolour, _font, _fontsize, _fontres);
         }
 
         //! Add label, using the passed-in pointer. Allows client code to update the text model
         morph::TextGeometry addLabel (const std::string& _text,
                                       const morph::vec<float, 3>& _toffset,
-                                      morph::VisualTextModel*& tm,
+                                      morph::VisualTextModel<gl_maj, gl_min, gles>*& tm,
                                       const std::array<float, 3>& _tcolour = morph::colour::black,
                                       const morph::VisualFont _font = morph::VisualFont::DVSans,
                                       const float _fontsize = 0.01,
                                       const int _fontres = 24)
         {
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
-            auto tmup = std::make_unique<morph::VisualTextModel> (this, this->shaders.tprog, _font, _fontsize, _fontres);
+            auto tmup = std::make_unique<morph::VisualTextModel<gl_maj, gl_min, gles>> (this, this->shaders.tprog, _font, _fontsize, _fontres);
             tmup->setupText (_text, _toffset, _tcolour);
             tm = tmup.get();
             this->texts.push_back (std::move(tmup));
@@ -352,7 +353,7 @@ namespace morph {
         void set_cursorpos (double _x, double _y) { this->cursorpos = {static_cast<float>(_x), static_cast<float>(_y)}; }
 
         //! A callback function
-        static void callback_render (morph::Visual* _v) { _v->render(); };
+        static void callback_render (morph::Visual<gl_maj, gl_min, gles>* _v) { _v->render(); };
 
         //! Render the scene
         void render()
@@ -511,9 +512,12 @@ namespace morph {
         morph::visgl::visual_shaderprogs shaders;
 
         // These static functions will be set as callbacks in each VisualModel object.
-        static morph::visgl::visual_shaderprogs get_shaderprogs (morph::Visual* _v) { return _v->shaders; };
-        static GLuint get_gprog (morph::Visual* _v) { return _v->shaders.gprog; };
-        static GLuint get_tprog (morph::Visual* _v) { return _v->shaders.tprog; };
+        static morph::visgl::visual_shaderprogs get_shaderprogs (morph::Visual<gl_maj, gl_min, gles>* _v)
+        {
+            return _v->shaders;
+        };
+        static GLuint get_gprog (morph::Visual<gl_maj, gl_min, gles>* _v) { return _v->shaders.gprog; };
+        static GLuint get_tprog (morph::Visual<gl_maj, gl_min, gles>* _v) { return _v->shaders.tprog; };
 
         //! The colour of ambient and diffuse light sources
         vec<float> light_colour = {1,1,1};
@@ -822,7 +826,7 @@ namespace morph {
     protected:
         //! A vector of pointers to all the morph::VisualModels (HexGridVisual,
         //! ScatterVisual, etc) which are going to be rendered in the scene.
-        std::vector<std::unique_ptr<VisualModel>> vm;
+        std::vector<std::unique_ptr<VisualModel<gl_maj, gl_min, gles>>> vm;
 
     private:
 
@@ -919,7 +923,7 @@ namespace morph {
             }
 
             // Use coordArrowsOffset to set the location of the CoordArrows *scene*
-            this->coordArrows = std::make_unique<CoordArrows>();
+            this->coordArrows = std::make_unique<CoordArrows<gl_maj, gl_min, gles>>();
             // For CoordArrows, because we don't add via Visual::addVisualModel(), we
             // have to set the get_shaderprogs function here:
             this->bindmodel (this->coordArrows);
@@ -928,10 +932,10 @@ namespace morph {
             morph::gl::Util::checkError (__FILE__, __LINE__);
 
             // Set up the title, which may or may not be rendered
-            this->textModel = std::make_unique<VisualTextModel> (this, this->shaders.tprog,
-                                                                 morph::VisualFont::DVSans,
-                                                                 0.035f, 64, morph::vec<float>({0.0f, 0.0f, 0.0f}),
-                                                                 this->title);
+            this->textModel = std::make_unique<VisualTextModel<gl_maj, gl_min, gles>> (this, this->shaders.tprog,
+                                                                                       morph::VisualFont::DVSans,
+                                                                                       0.035f, 64, morph::vec<float>({0.0f, 0.0f, 0.0f}),
+                                                                                       this->title);
         }
 
         //! The default z=0 position for HexGridVisual models
@@ -954,7 +958,7 @@ namespace morph {
 
     protected:
         //! A little model of the coordinate axes.
-        std::unique_ptr<CoordArrows> coordArrows;
+        std::unique_ptr<CoordArrows<gl_maj, gl_min, gles>> coordArrows;
 
         //! Position coordinate arrows on screen. Configurable at morph::Visual construction.
         vec<float, 2> coordArrowsOffset = {-0.8f, -0.8f};
@@ -967,9 +971,9 @@ namespace morph {
 
     private:
         //! A VisualTextModel for a title text.
-        std::unique_ptr<VisualTextModel> textModel = nullptr;
+        std::unique_ptr<VisualTextModel<gl_maj, gl_min, gles>> textModel = nullptr;
         //! Text models for labels
-        std::vector<std::unique_ptr<morph::VisualTextModel>> texts;
+        std::vector<std::unique_ptr<morph::VisualTextModel<gl_maj, gl_min, gles>>> texts;
 
         /*
          * Variables to manage projection and rotation of the object
