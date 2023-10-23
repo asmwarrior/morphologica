@@ -18,7 +18,7 @@ namespace morph {
 
     //! This class creates the vertices for a set of coordinate arrows to be rendered
     //! in a 3-D scene.
-    template<int gl_maj, int gl_min, bool gles>
+    template<int gl_maj = 4, int gl_min = 1, bool gles = false>
     class CoordArrows : public VisualModel<gl_maj, gl_min, gles>
     {
     public:
