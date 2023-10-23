@@ -51,8 +51,8 @@ namespace morph {
 
     //! The template argument T is the type of the data which this HexGridVisual
     //! will visualize.
-    template <class T>
-    class CartGridVisual : public VisualDataModel<T>
+    template <class T, int gl_maj = 4, int gl_min = 1, bool gles = false>
+    class CartGridVisual : public VisualDataModel<T, gl_maj, gl_min, gles>
     {
     public:
         //! Single constructor for simplicity

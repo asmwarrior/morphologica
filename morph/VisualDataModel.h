@@ -13,15 +13,15 @@ namespace morph {
 
     //! Class for VisualModels that visualize data of type T. T is probably float or
     //! double, but may be integer types, too.
-    template <typename T>
-    class VisualDataModel : public VisualModel
+    template <typename T, int gl_maj = 4, int gl_min = 1, bool gles = false>
+    class VisualDataModel : public VisualModel<gl_maj, gl_min, gles>
     {
     public:
         VisualDataModel()
-            : morph::VisualModel::VisualModel() {}
+            : morph::VisualModel<gl_maj, gl_min, gles>::VisualModel() {}
 
         VisualDataModel (const vec<float> _offset)
-            : morph::VisualModel::VisualModel (_offset) {}
+            : morph::VisualModel<gl_maj, gl_min, gles>::VisualModel (_offset) {}
 
         //! Deconstructor should *not* deallocate data - client code should do that
         ~VisualDataModel() {}

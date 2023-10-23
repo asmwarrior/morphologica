@@ -299,7 +299,7 @@ namespace morph {
                 throw std::runtime_error ("No text shader prog. Did your VisualModel-derived class set it up?");
             }
 
-            auto tmup = std::make_unique<morph::VisualTextModel> (this->parentVis, this->get_shaderprogs(this->parentVis).tprog, tfeatures);
+            auto tmup = std::make_unique<morph::VisualTextModel<gl_maj, gl_min, gles>> (this->parentVis, this->get_shaderprogs(this->parentVis).tprog, tfeatures);
 
             if (tfeatures.centre_horz == true) {
                 morph::TextGeometry tg = tmup->getTextGeometry(_text);
