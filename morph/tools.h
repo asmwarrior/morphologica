@@ -47,6 +47,12 @@ extern "C" {
 # include <sys/file.h>
 # include <sys/ioctl.h>
 # include <dirent.h>
+
+// Apparently term.h messes with GLFW3, so if I include this before glfw3.h programs refuse to compile. Will have to fix to use getTerminalWidth()
+# if 0
+#  include <term.h>
+# endif
+
 #endif
 #include <string.h>
 #include <time.h>
@@ -2684,6 +2690,79 @@ namespace morph
             return morph::Tools::numToDateTime (time(NULL), '\0', '\0', '_');
         }
 #endif
+
+#ifndef __WIN__
+#if 0 // Disabled as it messes with GLFW3. Enable once a fix is found.
+        /*!
+         * Return the terminal width. Unix only. Thanks to:
+         * https://medium.com/@pauljlucas/getting-the-terminal-width-in-c-48560b556575
+         *
+         * Requires terminfo library
+         *
+         * \return negative on failure, otherwise the width of the terminal.
+         */
+        static int getTerminalWidth()
+        {
+            char const *const term = getenv ("TERM"); // #include <stdlib.h>
+            if (term == nullptr) {
+                std::cerr << "TERM environment variable not set\n";
+                return -1;
+            }
+
+            char const *const cterm_path = ctermid (nullptr); // #include <stdio.h>
+            if (cterm_path == nullptr || cterm_path[0] == '\0') {
+                std::cerr << "ctermid() failed\n";
+                return -2;
+            }
+
+            int tty_fd = open (cterm_path, O_RDWR);
+            if (tty_fd == -1) {
+                std::cerr << "open(" << cterm_path << ") failed (errno = " << errno
+                          << " which means: " << strerror (errno) << ")\n";
+                return -3;
+            }
+
+            int rtn = 0;
+            int setupterm_err = 0;
+            if (setupterm ((char*)(term), tty_fd, &setupterm_err) != 0) { // #include <term.h>
+                switch (setupterm_err) {
+                case -1:
+                    std::cerr << "setupterm() failed: terminfo database not found\n";
+                    rtn = -4;
+                    break;
+                case 0:
+                    std::cerr << "setupterm() failed: TERM=" << term << " not found in database\n";
+                    rtn = -5;
+                    break;
+                case 1:
+                    std::cerr << "setupterm() failed: terminal is hardcopy\n";
+                    rtn = -6;
+                    break;
+                default:
+                    std::cerr << "setupterm() failed: Just failed. Don't know why.\n";
+                    rtn = -7;
+                    break;
+                } // switch
+            }
+
+            // If error, clean up and return now
+            if (rtn < 0) {
+                if (tty_fd != -1) { close (tty_fd); }
+                return rtn;
+            }
+
+            // Now get number of cols
+            int cols = tigetnum ((char*)"cols");
+            if (cols < 0) {
+                std::cerr << "tigetnum() failed (it returned: " << cols << ")\n";
+            }
+
+            if (tty_fd != -1) { close (tty_fd); }
+            return cols;
+        }
+#endif
+#endif
+
         /*!
          * This splits up a "search style" string into tokens.
          *

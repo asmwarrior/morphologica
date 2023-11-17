@@ -358,3 +358,8 @@ target_link_libraries(quit_callback OpenGL::GL glfw Freetype::Freetype)
 if(USE_GLEW)
   target_link_libraries(quit_callback GLEW::GLEW)
 endif()
+
+if(CURSES_FOUND)
+#add_executable(termwidth termwidth.cpp)
+#target_link_libraries(termwidth tinfo) # link of tinfo possible as curses was found
+endif()
