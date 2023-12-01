@@ -24,7 +24,6 @@
 #include <morph/VisualCommon.h>
 #include <morph/unicode.h>
 #include <morph/VisualFace.h>
-#include <morph/VisualResources.h>
 #include <morph/colour.h>
 #include <vector>
 #include <array>
@@ -138,7 +137,9 @@ namespace morph {
             // Set up a face to get characters. Choose font, and pixel size. A suitable
             // pixel size will depend on how large we're going to scale and should
             // probably be determined from this->fontscale.
-            this->face = VisualResources::i().getVisualFace (visualfont, this->fontpixels, this->parentVis);
+            // Heh - no good, because parentVis is an incomplete type, so would need a callback
+            this->face = this->parentVis->getVisualFace (visualfont, this->fontpixels);
+
             this->setupText (_txt);
         }
 
@@ -155,7 +156,7 @@ namespace morph {
             this->fontpixels = tfeatures.fontres;
             this->fontscale = this->m_width/(float)this->fontpixels;
             this->clr_text = tfeatures.colour;
-            this->face = VisualResources::i().getVisualFace (tfeatures.font, this->fontpixels, this->parentVis);
+            this->face = this->parentVis->getVisualFace (tfeatures.font, this->fontpixels);
             this->setupText (_txt);
         }
 
@@ -172,7 +173,7 @@ namespace morph {
             this->m_width = _m_width;
             this->fontpixels = _fontpixels;
             this->fontscale = _m_width/(float)this->fontpixels;
-            this->face = VisualResources::i().getVisualFace (visualfont, this->fontpixels, this->parentVis);
+            this->face = this->parentVis->getVisualFace (visualfont, this->fontpixels);
         }
 
         //! A more compact version of the VisualTextModel(GLuint, VisualFont, float, int), taking a TextFeatures object.
@@ -183,7 +184,7 @@ namespace morph {
             this->m_width = tfeatures.fontsize;
             this->fontpixels = tfeatures.fontres;
             this->fontscale = this->m_width/(float)this->fontpixels;
-            this->face = VisualResources::i().getVisualFace (tfeatures.font, this->fontpixels, this->parentVis);
+            this->face = this->parentVis->getVisualFace (tfeatures.font, this->fontpixels);
         }
 
         virtual ~VisualTextModel()

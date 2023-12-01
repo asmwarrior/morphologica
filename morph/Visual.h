@@ -48,6 +48,11 @@
 #include <morph/keys.h>
 
 #include <morph/VisualResources.h>
+#include <morph/VisualFace.h>
+// FreeType for text rendering
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include <morph/nlohmann/json.hpp>
 #include <morph/CoordArrows.h>
 #include <morph/Quaternion.h>
@@ -159,6 +164,13 @@ namespace morph {
 #ifndef OWNED_MODE
             glfwDestroyWindow (this->window);
 #endif
+            // Clean up the faces, which is a map:
+            for (auto& f : this->faces) { delete f.second; }
+            this->faces.clear();
+
+            // We're done with freetype
+            FT_Done_FreeType (this->freetype_lib);
+
             if (this->shaders.gprog) {
                 glDeleteProgram (this->shaders.gprog);
                 this->shaders.gprog = 0;
@@ -193,7 +205,46 @@ namespace morph {
             this->init_window();
 
             // Now make sure that Freetype is set up
-            morph::VisualResources::i().freetype_init (this);
+            this->freetype_init();
+        }
+
+        //! Initialize a freetype library instance. I wanted
+        //! to have only a single freetype library instance, but this didn't work, so I
+        //! create one FT_Library for each OpenGL context (i.e. one for each morph::Visual
+        //! window). Thus, arguably, the FT_Library should be a member of morph::Visual,
+        //! but that's a task for the future, as I coded it this way under the false
+        //! assumption that I'd only need one FT_Library.
+        void freetype_init()
+        {
+            if (this->freetype_lib == FT_Library{0}) {
+                // Use of gl calls here may make it neat to set up GL/GLFW here in VisualResources.
+                glPixelStorei (GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
+                morph::gl::Util::checkError (__FILE__, __LINE__);
+                if (FT_Init_FreeType (&this->freetype_lib)) {
+                    std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+                } // else successfully initialized freetype
+            }
+        }
+        //! The freetype lib instance for this morph::Visual
+        FT_Library freetype_lib = FT_Library{0};
+        //! The collection of VisualFaces generated for this instance of the
+        //! application. Create one VisualFace for each unique combination of VisualFont
+        //! and fontpixels (the texture resolution)
+        std::map<std::tuple<morph::VisualFont, unsigned int>, morph::gl::VisualFace*> faces;
+
+        //! Return a pointer to a VisualFace for the given \a font at the given texture
+        //! resolution, \a fontpixels and the given window (i.e. OpenGL context) \a _win.
+        morph::gl::VisualFace* getVisualFace (morph::VisualFont font, unsigned int fontpixels)
+        {
+            morph::gl::VisualFace* rtn = nullptr;
+            auto key = std::make_tuple(font, fontpixels);
+            try {
+                rtn = this->faces.at (key);
+            } catch (const std::out_of_range& e) {
+                this->faces[key] = new morph::gl::VisualFace (font, fontpixels, this->freetype_lib);
+                rtn = this->faces.at (key);
+            }
+            return rtn;
         }
 
         //! Take a screenshot of the window
