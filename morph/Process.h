@@ -22,9 +22,9 @@ extern "C" {
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+//#include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/poll.h>
+//#include <sys/poll.h>
 #include <signal.h>
 }
 #include <morph/MorphDbg.h>
