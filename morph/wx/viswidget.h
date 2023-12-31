@@ -161,11 +161,10 @@ namespace morph {
 
             void OnMouseWheel(wxMouseEvent& event)
             {
-
-                int y = event.GetWheelDelta() / 120;
+                int direction = event.GetWheelRotation()/120; // 1 or -1
                 wxPoint numSteps;
                 numSteps.x = 0;
-                numSteps.y = y;
+                numSteps.y = direction;
                 v.scroll_callback (numSteps.x, numSteps.y);
                 Refresh(false);
                 event.Skip();
