@@ -49,6 +49,8 @@ namespace morph {
                 SetCurrent(*m_context);
 
                 Bind(wxEVT_MOTION, &viswidget::OnMouseMove, this);
+                Bind(wxEVT_LEFT_DOWN, &viswidget::OnMousePress, this);
+                Bind(wxEVT_RIGHT_DOWN, &viswidget::OnMousePress, this);
                 Bind(wxEVT_LEFT_UP, &viswidget::OnMouseRelease, this);
                 Bind(wxEVT_RIGHT_UP, &viswidget::OnMouseRelease, this);
                 Bind(wxEVT_MOUSEWHEEL, &viswidget::OnMouseWheel, this);
