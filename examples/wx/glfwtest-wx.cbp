@@ -50,6 +50,8 @@
 			<Add library="opengl32" />
 			<Add library="freetype" />
 		</Linker>
+		<Unit filename="../../morph/wx/keycodes.h" />
+		<Unit filename="../../morph/wx/viswidget.h" />
 		<Unit filename="main-wx.cpp" />
 		<Extensions />
 	</Project>
