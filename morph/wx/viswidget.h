@@ -54,6 +54,8 @@ namespace morph {
                 Bind(wxEVT_MOUSEWHEEL, &viswidget::OnMouseWheel, this);
                 Bind(wxEVT_KEY_DOWN, &viswidget::OnKeyPress, this);
 
+                Bind(wxEVT_SIZE, &viswidget::OnSize, this);
+
                 Bind(wxEVT_PAINT, &viswidget::OnPaint, this);
 
                 initializeGL();
